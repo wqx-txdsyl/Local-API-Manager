@@ -29,7 +29,7 @@ pip install -r requirements.txt
 python main.py
 ```
 
-打开控制台 **http://127.0.0.1:8800/console**，添加一个提供商，生成一把 `sk-loc-*` Key，
+打开控制台 <http://127.0.0.1:8800/console>，添加一个提供商，生成一把 `sk-loc-*` Key，
 然后让所有客户端指向：
 
 | 客户端类型 | Base URL | API Key |
