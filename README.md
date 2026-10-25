@@ -23,7 +23,7 @@ OpenAI 与 Anthropic 双协议进出 · 任意客户端 × 任意上游 · 纯�
 ## 快速开始
 
 ```bash
-git clone https://github.com/wqx-txdsyl/Local-API-Manager.git
+git clone https://github.com/wqx-txdsyl/lam.git
 cd Local-API-Manager
 pip install -r requirements.txt
 python main.py
