@@ -1,0 +1,15 @@
+# Local data: provider keys, request logs, usage stats, daemon/service logs
+data/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Local test artifacts
+.smoke*.json
+*.local.json
+
+# OS
+Thumbs.db
+.DS_Store

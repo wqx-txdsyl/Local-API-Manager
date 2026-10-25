@@ -1,0 +1,368 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Local API Manager</title>
+<style>
+:root{--line:#ececec;--ink:#111;--dim:#999;--bg:#fff;--hover:#fafafa}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,"Segoe UI","Microsoft YaHei",system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:14px;line-height:1.5}
+a{color:inherit}
+button{font:inherit;cursor:pointer;background:#fff;border:1px solid var(--line);border-radius:6px;padding:5px 12px;color:var(--ink)}
+button:hover{background:var(--hover)}
+button.primary{background:#111;border-color:#111;color:#fff}
+button.primary:hover{background:#333}
+button.danger:hover{border-color:#e55;color:#e55;background:#fff}
+button.ghost{border-color:transparent;color:var(--dim);padding:5px 8px}
+button.ghost:hover{color:var(--ink);background:var(--hover)}
+input,select{font:inherit;border:1px solid var(--line);border-radius:6px;padding:5px 10px;background:#fff;color:var(--ink);outline:none}
+input:focus,select:focus{border-color:#111}
+input::placeholder{color:#ccc}
+.wrap{max-width:1080px;margin:0 auto;padding:0 32px 80px}
+header{display:flex;align-items:baseline;gap:16px;padding:28px 0 0}
+header h1{font-size:17px;font-weight:600;letter-spacing:.2px}
+header .ep{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
+header .ep span{font-size:12px;color:var(--dim);border:1px solid var(--line);border-radius:99px;padding:3px 10px;cursor:pointer}
+header .ep span:hover{color:var(--ink)}
+nav{display:flex;gap:4px;border-bottom:1px solid var(--line);margin:20px 0 28px}
+nav a{padding:8px 14px;color:var(--dim);text-decoration:none;border-bottom:2px solid transparent;margin-bottom:-1px;cursor:pointer}
+nav a.on{color:var(--ink);border-color:#111;font-weight:500}
+nav a:hover{color:var(--ink)}
+section{display:none}
+section.on{display:block}
+.statgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.stat{background:#fff;padding:18px 20px}
+.stat b{display:block;font-size:24px;font-weight:600;letter-spacing:-.5px}
+.stat span{font-size:12px;color:var(--dim)}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;margin-top:24px}
+.card{border:1px solid var(--line);border-radius:10px;padding:16px 18px}
+.card h3{font-size:13px;font-weight:500;margin-bottom:10px}
+.card code{display:block;font-family:ui-monospace,Consolas,monospace;font-size:12px;color:var(--dim);word-break:break-all}
+.row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.tablewrap{border:1px solid var(--line);border-radius:10px;overflow:auto}
+table{width:100%;border-collapse:collapse;white-space:nowrap}
+th{font-size:12px;font-weight:500;color:var(--dim);text-align:left;padding:10px 14px;border-bottom:1px solid var(--line)}
+td{padding:10px 14px;border-bottom:1px solid var(--line);font-size:13px}
+tr:last-child td{border-bottom:none}
+tbody tr:hover{background:var(--hover)}
+td.dim,span.dim{color:var(--dim)}
+.tag{display:inline-block;font-size:11px;border:1px solid var(--line);border-radius:99px;padding:1px 8px;color:var(--dim)}
+.tag.on{color:#111;border-color:#111}
+.pill{display:inline-block;min-width:8px;height:8px;border-radius:99px;background:#ddd;margin-right:6px}
+.pill.on{background:#111}
+.bar{height:4px;background:#f0f0f0;border-radius:99px;overflow:hidden;min-width:60px}
+.bar i{display:block;height:100%;background:#111}
+.provider{border:1px solid var(--line);border-radius:10px;padding:16px 18px;margin-bottom:12px}
+.provider .head{display:flex;align-items:center;gap:10px}
+.provider .head b{font-size:14px;font-weight:600}
+.provider .head .url{font-size:12px;color:var(--dim);font-family:ui-monospace,Consolas,monospace}
+.provider .head .spacer{flex:1}
+.provider .body{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap;align-items:center}
+.provider .body input.key{flex:1;min-width:220px;font-family:ui-monospace,Consolas,monospace;font-size:12px}
+.kv{font-size:12px;color:var(--dim)}
+.kv b{color:var(--ink);font-weight:500}
+.sectionhead{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+.sectionhead h2{font-size:15px;font-weight:600}
+.sectionhead .spacer{flex:1}
+.empty{border:1px dashed var(--line);border-radius:10px;padding:40px;text-align:center;color:var(--dim);font-size:13px}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#111;color:#fff;border-radius:8px;padding:8px 18px;font-size:13px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:9}
+.toast.show{opacity:1}
+.mono{font-family:ui-monospace,Consolas,monospace;font-size:12px}
+code.k{cursor:pointer}
+code.k:hover{color:#111}
+form.inline{display:flex;gap:8px;flex-wrap:wrap}
+form.inline input{min-width:140px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>Local API Manager</h1>
+  <div class="ep">
+    <span data-copy="http://127.0.0.1:PORT/v1">OpenAI · /v1</span>
+    <span data-copy="http://127.0.0.1:PORT">Anthropic · /</span>
+    <span data-copy="/console">控制台</span>
+  </div>
+</header>
+<nav>
+  <a data-tab="overview" class="on">概览</a>
+  <a data-tab="providers">提供商</a>
+  <a data-tab="models">模型</a>
+  <a data-tab="keys">客户端</a>
+  <a data-tab="usage">用量</a>
+  <a data-tab="logs">日志</a>
+</nav>
+
+<section id="tab-overview" class="on"></section>
+<section id="tab-providers"></section>
+<section id="tab-models"></section>
+<section id="tab-keys"></section>
+<section id="tab-usage"></section>
+<section id="tab-logs"></section>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+let S=null, PORT=8800, logOffset=0;
+const fmt=n=>{n=+n||0; return n>=1e9?(n/1e9).toFixed(2)+'B':n>=1e6?(n/1e6).toFixed(2)+'M':n>=1e3?(n/1e3).toFixed(1)+'k':Math.round(n)};
+const money=(usd,cny)=>{usd=+usd||0;cny=+cny||0;const p=[];if(usd)p.push('$'+usd.toFixed(3));if(cny)p.push('¥'+cny.toFixed(3));return p.join(' + ')||'—'};
+const ts=t=>new Date(t*1000).toLocaleString('zh-CN',{hour12:false});
+const hm=t=>new Date(t*1000).toLocaleTimeString('zh-CN',{hour12:false});
+function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('show'),1800)}
+async function copy(s){try{await navigator.clipboard.writeText(s);toast('已复制')}catch(e){toast(s)}}
+function bindCopy(){$$('header [data-copy]').forEach(el=>el.onclick=()=>copy(el.dataset.copy.replace('PORT',PORT)))}
+bindCopy();
+
+async function api(path,method='GET',body){
+  const r=await fetch(path,{method,headers:{'Content-Type':'application/json'},body:body?JSON.stringify(body):undefined});
+  const d=await r.json().catch(()=>({}));
+  if(!r.ok)throw new Error(d.error||r.status);
+  return d;
+}
+
+/* ---------- tabs ---------- */
+$$('nav a').forEach(a=>a.onclick=()=>{
+  $$('nav a').forEach(x=>x.classList.toggle('on',x===a));
+  $$('section').forEach(s=>s.classList.toggle('on',s.id==='tab-'+a.dataset.tab));
+  const t=a.dataset.tab;
+  if(t==='overview')renderOverview();
+  if(t==='providers')renderProviders();
+  if(t==='models')renderModels();
+  if(t==='keys')renderKeys();
+  if(t==='usage')renderUsage();
+  if(t==='logs'){logOffset=0;renderLogs()}
+});
+
+/* ---------- overview ---------- */
+async function renderOverview(){
+  S=await api('/api/state'); PORT=S.port; bindCopy();
+  const o=S.overview, t=o.today, tot=o.total;
+  $('#tab-overview').innerHTML=`
+  <div class="statgrid">
+    <div class="stat"><b>${fmt(t.req)}</b><span>今日请求</span></div>
+    <div class="stat"><b>${fmt(+t.i+ +t.o)}</b><span>今日 Tokens</span></div>
+    <div class="stat"><b>${money(t.cu,t.cc)}</b><span>今日估算费用</span></div>
+    <div class="stat"><b>${o.providers_on}<span class="dim"> / ${o.providers_all}</span></b><span>提供商</span></div>
+    <div class="stat"><b>${o.models}</b><span>模型</span></div>
+    <div class="stat"><b>${o.keys}</b><span>客户端 Key</span></div>
+  </div>
+  <div class="cards">
+    <div class="card"><h3>OpenAI 协议</h3><code>Base URL&nbsp; http://127.0.0.1:${PORT}/v1</code><code>POST /v1/chat/completions · GET /v1/models</code></div>
+    <div class="card"><h3>Anthropic 协议</h3><code>Base URL&nbsp; http://127.0.0.1:${PORT}</code><code>POST /v1/messages</code></div>
+    <div class="card"><h3>统一 Key</h3><code>Authorization: Bearer sk-loc-…</code><code>或 x-api-key: sk-loc-…</code><code style="margin-top:6px">定向：model 填 provider/model</code></div>
+  </div>
+  <div class="sectionhead" style="margin-top:28px"><h2>最近请求</h2></div>
+  <div id="ov-logs"></div>`;
+  const d=await api('/api/logs?limit=8');
+  $('#ov-logs').innerHTML=logTable(d.logs,false);
+}
+
+/* ---------- providers ---------- */
+async function renderProviders(){
+  S=await api('/api/state');
+  const opts=S.presets.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
+  const list=S.providers.map(p=>{
+    const models=p.models||[];
+    return `<div class="provider" data-id="${p.id}">
+      <div class="head">
+        <span class="pill ${p.enabled?'on':''}"></span><b>${p.name}</b>
+        <span class="tag">${p.kind}</span>
+        ${p.billing==='subscription'?'<span class="tag">订阅</span>':''}
+        <span class="url">${p.base_url}</span>
+        <span class="spacer"></span>
+        <span class="kv">${models.length?models.length+' 模型':(p.models_error?'<span style="color:#e55">'+p.models_error.slice(0,40)+'</span>':'未发现模型')}</span>
+        ${p.balance?`<span class="kv"><b>${p.balance}</b></span>`:''}
+        <button class="ghost" data-act="toggle">${p.enabled?'停用':'启用'}</button>
+        <button data-act="test">测试</button>
+        <button data-act="discover">刷新模型</button>
+        <button class="ghost danger" data-act="del">删除</button>
+      </div>
+      <div class="body">
+        <input class="key" placeholder="${p.has_key?'已保存 · 粘贴新值覆盖':'API Key'}" data-act="key">
+        <input style="width:70px" value="${p.priority}" title="优先级" data-act="prio">
+        <button class="primary" data-act="save">保存</button>
+      </div>
+    </div>`}).join('');
+  $('#tab-providers').innerHTML=`
+    <div class="sectionhead"><h2>提供商</h2><span class="spacer"></span>
+      <button id="codex-import">导入 Codex 登录</button>
+      <button id="custom-add">添加自定义</button>
+      <select id="preset-sel">${opts}</select>
+      <input id="preset-key" placeholder="API Key" style="width:200px">
+      <button class="primary" id="preset-add">添加</button>
+    </div>
+    ${list||'<div class="empty">从上方选择预配置或添加自定义</div>'}
+    <div id="modal-mask" style="display:none;position:fixed;inset:0;background:rgba(255,255,255,.85);z-index:8" >
+      <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff;border:1px solid var(--line);border-radius:12px;padding:28px;width:440px;max-width:92vw;box-shadow:0 8px 40px rgba(0,0,0,.08)">
+        <h3 style="font-size:15px;font-weight:600;margin-bottom:16px">添加自定义提供商</h3>
+        <form id="cform" style="display:grid;gap:10px">
+          <input name="name" placeholder="名称" required>
+          <input name="id" placeholder="ID（小写字母数字）" required pattern="[a-z0-9][a-z0-9_\-]*">
+          <input name="base_url" placeholder="Base URL（如 https://api.example.com/v1）" required>
+          <select name="kind"><option value="openai">OpenAI 兼容</option><option value="anthropic">Anthropic 兼容</option></select>
+          <input name="api_key" placeholder="API Key">
+          <div class="row" style="margin-top:6px;justify-content:flex-end">
+            <button type="button" id="modal-cancel">取消</button>
+            <button type="submit" class="primary">添加</button>
+          </div>
+        </form>
+      </div>
+    </div>`;
+  $('#preset-add').onclick=async()=>{
+    try{
+      await api('/api/providers/add','POST',{preset_id:$('#preset-sel').value,api_key:$('#preset-key').value});
+      $('#preset-key').value='';toast('已添加 · 模型发现中');renderProviders();
+      setTimeout(renderProviders,3000)
+    }catch(e){toast(e.message)}
+  };
+  $('#codex-import').onclick=async()=>{
+    try{const d=await api('/api/providers/codex/import','POST',{});toast('Codex 已导入 '+(d.models||[]).length+' 模型');renderProviders()}
+    catch(e){toast(e.message)}
+  };
+  const mask=$('#modal-mask');
+  $('#custom-add').onclick=()=>{mask.style.display='block';$('#cform [name=name]').focus()};
+  $('#modal-cancel').onclick=()=>{mask.style.display='none'};
+  mask.onclick=e=>{if(e.target===mask)mask.style.display='none'};
+  $('#cform').onsubmit=async e=>{
+    e.preventDefault();const f=new FormData(e.target);
+    try{
+      await api('/api/providers/add','POST',{id:f.get('id'),name:f.get('name'),
+        kind:f.get('kind'),base_url:f.get('base_url'),api_key:f.get('api_key')});
+      e.target.reset();mask.style.display='none';toast('已添加 · 模型发现中');renderProviders();
+      setTimeout(renderProviders,3000);
+    }catch(err){toast(err.message)}
+  };
+  $$('#tab-providers .provider').forEach(card=>{
+    const id=card.dataset.id;
+    card.onclick=async e=>{
+      const act=e.target.dataset&&e.target.dataset.act;
+      if(!act)return;
+      if(act==='toggle'||act==='del'||act==='test'||act==='discover'){
+        try{
+          if(act==='toggle'){const p=S.providers.find(x=>x.id===id);await api('/api/providers/update','POST',{id,enabled:!p.enabled})}
+          if(act==='del'){if(!confirm('删除 '+id+'？'))return;await api('/api/providers/'+id+'/delete','POST')}
+          if(act==='test'){toast('测试中…');const d=await api('/api/providers/'+id+'/test','POST');toast(d.test.ok?('连通 · '+d.test.models+' 模型'+(d.balance.text?' · '+d.balance.text:'')):('失败 '+d.test.error))}
+          if(act==='discover'){const d=await api('/api/providers/'+id+'/discover','POST');toast(d.ok?('发现 '+(d.models||[]).length+' 模型'):('失败 '+d.error))}
+          renderProviders()
+        }catch(err){toast(err.message)}
+      }
+    };
+    card.querySelector('[data-act=save]').onclick=async()=>{
+      const key=card.querySelector('[data-act=key]').value.trim();
+      const prio=+card.querySelector('[data-act=prio]').value||100;
+      const body={id,priority:prio};
+      if(key)body.api_key=key;
+      try{await api('/api/providers/update','POST',body);toast('已保存');renderProviders()}catch(e){toast(e.message)}
+    };
+  });
+}
+
+/* ---------- models ---------- */
+async function renderModels(){
+  S=await api('/api/state');
+  const pros=S.providers.map(p=>`<option value="${p.id}">${p.id}${p.enabled?'':'（停用）'}</option>`).join('');
+  const rows=S.models.map(m=>`<tr>
+    <td><b>${m.local_name}</b></td><td class="dim">${m.provider_id}</td>
+    <td class="mono dim">${m.upstream_name}</td>
+    <td><span class="tag ${m.provider_on?'on':''}">${m.source}</span></td>
+    <td><button class="ghost" data-t="${m.local_name}|${m.provider_id}">${m.enabled?'停用':'启用'}</button></td>
+    <td><button class="ghost danger" data-d="${m.local_name}|${m.provider_id}">删除</button></td></tr>`).join('');
+  $('#tab-models').innerHTML=`
+    <div class="sectionhead"><h2>模型</h2><span class="spacer"></span>
+      <form class="inline" id="mform">
+        <input name="local" placeholder="本地名">
+        <select name="prov">${pros}</select>
+        <input name="up" placeholder="上游模型">
+        <button class="primary">添加</button>
+      </form>
+    </div>
+    ${rows?`<div class="tablewrap"><table><thead><tr><th>本地名</th><th>提供商</th><th>上游</th><th>来源</th><th></th><th></th></tr></thead><tbody>${rows}</tbody></table></div>`:'<div class="empty">暂无模型 · 到「提供商」刷新模型池</div>'}`;
+  $('#mform').onsubmit=async e=>{
+    e.preventDefault();const f=new FormData(e.target);
+    try{await api('/api/models/add','POST',{local_name:f.get('local'),provider_id:f.get('prov'),upstream_name:f.get('up')});renderModels()}catch(err){toast(err.message)}
+  };
+  $$('#tab-models [data-t]').forEach(b=>b.onclick=async()=>{await api('/api/models/toggle','POST',{local_name:b.dataset.t.split('|')[0],provider_id:b.dataset.t.split('|')[1]});renderModels()});
+  $$('#tab-models [data-d]').forEach(b=>b.onclick=async()=>{await api('/api/models/delete','POST',{local_name:b.dataset.d.split('|')[0],provider_id:b.dataset.d.split('|')[1]});renderModels()});
+}
+
+/* ---------- keys ---------- */
+async function renderKeys(){
+  S=await api('/api/state');
+  const rows=S.keys.map(k=>`<tr>
+    <td>${k.name}</td>
+    <td><code class="k dim" data-copy>${k.key}</code></td>
+    <td><span class="pill ${k.enabled?'on':''}" style="margin:0"></span></td>
+    <td>${fmt(k.req_total)}</td>
+    <td class="dim">${fmt(k.in_total)} / ${fmt(k.out_total)}</td>
+    <td>${money(k.cost_usd,k.cost_cny)}</td>
+    <td class="dim">${k.last_used?hm(k.last_used):'—'}</td>
+    <td>
+      <button class="ghost" data-copy="${k.key}">复制</button>
+      <button class="ghost" data-r="${k.id}">重置</button>
+      <button class="ghost" data-ro="${k.id}">轮换</button>
+      <button class="ghost" data-en="${k.id}" data-v="${k.enabled?0:1}">${k.enabled?'停用':'启用'}</button>
+      <button class="ghost danger" data-del="${k.id}">删除</button>
+    </td></tr>`).join('');
+  $('#tab-keys').innerHTML=`
+    <div class="sectionhead"><h2>客户端</h2><span class="spacer"></span>
+      <form class="inline" id="kform"><input name="name" placeholder="客户端名称"><button class="primary">生成 Key</button></form>
+    </div>
+    ${rows?`<div class="tablewrap"><table><thead><tr><th>名称</th><th>Key</th><th>状态</th><th>请求</th><th>Tokens 入/出</th><th>费用</th><th>最近使用</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>`:'<div class="empty">生成一个统一 Key 给所有客户端</div>'}`;
+  $('#kform').onsubmit=async e=>{
+    e.preventDefault();
+    const d=await api('/api/keys/create','POST',{name:new FormData(e.target).get('name')});
+    renderKeys();setTimeout(()=>copy(d.key),100);
+  };
+  $$('#tab-keys [data-copy]').forEach(el=>el.onclick=()=>copy(el.dataset.copy!==undefined&&el.dataset.copy!==''?el.dataset.copy:el.textContent));
+  $$('#tab-keys [data-r]').forEach(b=>b.onclick=async()=>{await api('/api/keys/'+b.dataset.r+'/reset','POST');toast('已重置');renderKeys()});
+  $$('#tab-keys [data-ro]').forEach(b=>b.onclick=async()=>{if(!confirm('轮换后旧 Key 立即失效，确定？'))return;const d=await api('/api/keys/'+b.dataset.ro+'/rotate','POST');renderKeys();setTimeout(()=>copy(d.key),100)});
+  $$('#tab-keys [data-en]').forEach(b=>b.onclick=async()=>{await api('/api/keys/'+b.dataset.en+'/update','POST',{enabled:!!+b.dataset.v});renderKeys()});
+  $$('#tab-keys [data-del]').forEach(b=>b.onclick=async()=>{if(!confirm('删除 Key？'))return;await api('/api/keys/'+b.dataset.del+'/delete','POST');renderKeys()});
+}
+
+/* ---------- usage ---------- */
+async function renderUsage(){
+  const [u,S2]=await Promise.all([api('/api/usage?days=14'),api('/api/state')]);S=S2;
+  const mx=Math.max(1,...u.by_day.map(r=>+r.req||0));
+  const dayRows=u.by_day.map(r=>`<tr><td>${r.day}</td>
+    <td><div class="bar"><i style="width:${100*r.req/mx}%"></i></div></td>
+    <td>${fmt(r.req)}</td><td class="dim">${fmt(r.i)} / ${fmt(r.o)}</td><td>${money(r.cu,r.cc)}</td></tr>`).join('');
+  const tbl=(rows,first)=>rows.length?`<div class="tablewrap"><table><thead><tr><th>${first}</th><th>请求</th><th>Tokens 入/出</th><th>费用</th></tr></thead><tbody>${rows}</tbody></table></div>`:'<div class="empty">暂无数据</div>';
+  $('#tab-usage').innerHTML=`
+    <div class="sectionhead"><h2>用量 · 近 14 天</h2></div>
+    ${dayRows?`<div class="tablewrap" style="margin-bottom:24px"><table><thead><tr><th>日期</th><th></th><th>请求</th><th>Tokens 入/出</th><th>费用</th></tr></thead><tbody>${dayRows}</tbody></table></div>`:'<div class="empty" style="margin-bottom:24px">暂无数据</div>'}
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:24px">
+    <div><div class="sectionhead"><h2>按提供商</h2></div>${tbl(u.by_provider.map(r=>`<tr><td>${r.provider_id}</td><td>${fmt(r.req)}</td><td class="dim">${fmt(r.i)} / ${fmt(r.o)}</td><td>${money(r.cu,r.cc)}</td></tr>`).join(''),'提供商')}</div>
+    <div><div class="sectionhead"><h2>按客户端</h2></div>${tbl(u.by_key.map(r=>`<tr><td>${r.key_name}</td><td>${fmt(r.req)}</td><td class="dim">${fmt(r.i)} / ${fmt(r.o)}</td><td>${money(r.cu,r.cc)}</td></tr>`).join(''),'客户端')}</div>
+    <div><div class="sectionhead"><h2>按模型</h2></div>${tbl(u.by_model.map(r=>`<tr><td>${r.model}</td><td>${fmt(r.req)}</td><td class="dim">${fmt(r.i)} / ${fmt(r.o)}</td><td>${money(r.cu,r.cc)}</td></tr>`).join(''),'模型')}</div>
+    </div>`;
+}
+
+/* ---------- logs ---------- */
+function logTable(logs,pager){
+  const rows=logs.map(l=>`<tr>
+    <td class="dim">${hm(l.ts)}</td><td>${l.key_name||'—'}</td>
+    <td><b>${l.model||''}</b><span class="dim"> · ${l.route||''}</span></td>
+    <td class="dim">${l.protocol||''}</td>
+    <td>${l.status>=200&&l.status<300?'<span class="tag on">'+l.status+'</span>':`<span class="tag" style="color:#e55;border-color:#e55">${l.status}</span>`}</td>
+    <td class="dim">${l.ms}ms</td>
+    <td class="dim">${l.in_tok||l.out_tok?fmt(l.in_tok)+' / '+fmt(l.out_tok):'—'}</td>
+    <td>${money(l.cost_usd,l.cost_cny)==='—'?'':money(l.cost_usd,l.cost_cny)}</td>
+    <td class="dim" title="${(l.error||'').replace(/"/g,'&quot;')}">${(l.error||'').slice(0,24)}</td></tr>`).join('');
+  return rows?`<div class="tablewrap"><table><thead><tr><th>时间</th><th>Key</th><th>模型 · 路由</th><th>协议</th><th>状态</th><th>耗时</th><th>Tokens 入/出</th><th>费用</th><th>错误</th></tr></thead><tbody>${rows}</tbody></table></div>${pager?`<div class="row" style="margin-top:12px"><span class="spacer"></span><button id="lprev">上一页</button><button id="lnext">下一页</button></div>`:''}`
+    :'<div class="empty">暂无请求</div>';
+}
+async function renderLogs(){
+  const d=await api(`/api/logs?limit=50&offset=${logOffset}`);
+  $('#tab-logs').innerHTML=`<div class="sectionhead"><h2>日志</h2><span class="spacer dim kv">第 ${logOffset+1}–${logOffset+d.logs.length} 条</span></div>`+logTable(d.logs,true);
+  const p=$('#lprev'),n=$('#lnext');
+  if(p)p.onclick=()=>{logOffset=Math.max(0,logOffset-50);renderLogs()};
+  if(n)n.onclick=()=>{logOffset+=50;renderLogs()};
+}
+
+renderOverview();
+</script>
+</body>
+</html>
